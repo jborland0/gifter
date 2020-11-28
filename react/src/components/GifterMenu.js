@@ -12,6 +12,7 @@ import Login from './Login';
 import Register from './Register';
 import EditGift from './EditGift';
 import $ from 'jquery';
+import mosquito from '../images/mosquito_tiny.png'
 
 class GifterMenu extends GifterComponent {
   	constructor(props) {
@@ -128,9 +129,11 @@ class GifterMenu extends GifterComponent {
 					<Navbar.Brand href="/">
 						<img
 							alt=""
-							src={require('../images/mosquito_tiny.png')}
+							src={mosquito}
 							className="d-inline-block"
 							style={{marginTop: -7}}
+							width={20}
+							height={20}
 						/>{' '}
 						Wishlist
 					</Navbar.Brand>
