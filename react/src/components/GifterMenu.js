@@ -140,6 +140,7 @@ class GifterMenu extends GifterComponent {
 						Wishlist
 					</Navbar.Brand>
 					<Nav className="justify-content-end" style={{ width: "100%" }}>
+						<Nav.Link href='#' onSelect={(eventKey, event) => this.props.history.push(this.props.match.path + '/gifts')}>Gifts</Nav.Link>
 						<Nav.Link href='#' onSelect={(eventKey, event) => this.props.history.push(this.props.match.path + '/groups')}>Groups</Nav.Link>
 						{this.renderAccountLinks()}
 					</Nav>

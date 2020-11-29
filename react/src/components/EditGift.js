@@ -13,166 +13,159 @@ class EditGift extends GifterComponent {
 		super(props);
 
 		this.state = {
-			date: new Date(),
-			checknum: '',
-			transsource: '',
-			transdest: '',
-			comment: '',
-			amount: '',
-			status: '',
-			entities: [],
-			types: []
+			groups: [],
+			group: 0,
+			description: '',
+			link: ''
 		}
 	}
 
 	componentDidMount() {
 		var self = this;
-
-		$.ajax({
-			type: 'get',
-			url: this.getConfig().baseURL + 'entities/',
-		}).done(function (data) {
-			self.mergeState({ entities: data });
-		}).fail(function (jqXHR, textStatus, errorThrown) {
-			self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
-		});
 		
 		$.ajax({
 			type: 'get',
-			url: this.getConfig().baseURL + 'transactiontypes/',
+			url: this.getConfig().baseURL + 'getactivegroups/',
 		}).done(function (data) {
-			self.mergeState({ types: data });
+			self.mergeState({ 
+				groups: data.groups,
+				group: data.groups.length > 0 ? data.groups[0].group_id : 0
+			}, () => {
+				if (self.props.match.params.giftId !== 'new') {
+					self.loadGift();
+				}				
+			});
 		}).fail(function (jqXHR, textStatus, errorThrown) {
 			self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
-		});
+		});		
+	}
+
+	loadGift() {
+		var self = this;
 
 		$.ajax({
 			type: 'get',
-			url: this.getConfig().baseURL + 'gettransaction/',
-			data: 'transId=' + this.props.match.params.transactionId
+			url: this.getConfig().baseURL + 'getgift/',
+			data: 'giftId=' + this.props.match.params.giftId
 		}).done(function (data) {
-			var transaction = data[0];
 			self.mergeState({
-				date: new Date(transaction.transdate),
-				checknum: transaction.checknum,
-				transsource: transaction.transsource_id,
-				transdest: transaction.transdest_id,
-				comment: transaction.comments,
-				amount: transaction.amount,
-				status: transaction.status
+				group: data.groupId,
+				description: data.description,
+				link: data.link
 			});
 		}).fail(function (jqXHR, textStatus, errorThrown) {
 			self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
 		});
 	}
 	
-	saveTransaction(event) {
+	cancelEdit() {
+		this.props.history.push(this.getParentMatchPath() + '/gifts');
+	}
+	
+	saveGift(event) {
 		var self = this;
 		event.preventDefault();
+				
+		if (this.props.match.params.giftId === 'new') {
+			$.ajax({
+				type: 'post',
+				url: this.getConfig().baseURL + 'addgift/',
+				data: JSON.stringify({ 
+					groupId: this.state.group,
+					description: this.state.description,
+					link: this.state.link
+				})
+			}).done(function (data) {
+				self.props.history.push(self.getParentMatchPath() + '/gifts');
+			}).fail(function (jqXHR, textStatus, errorThrown) {
+				self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
+			});
+		} else {
+			$.ajax({
+				type: 'post',
+				url: this.getConfig().baseURL + 'updategift/',
+				data: JSON.stringify({ 
+					giftId: this.props.match.params.giftId,
+					groupId: this.state.group,
+					description: this.state.description,
+					link: this.state.link
+				})
+			}).done(function (data) {
+				self.props.history.push(self.getParentMatchPath() + '/gifts');
+			}).fail(function (jqXHR, textStatus, errorThrown) {
+				self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
+			});			
+		}
+	}
+	
+	deleteGift() {
+		var self = this;
 		
-		console.log(this.state);
-		
-		/*
 		$.ajax({
 			type: 'post',
-			url: this.getConfig().baseURL + 'login/',
-			data: JSON.stringify(this.state)
+			url: this.getConfig().baseURL + 'deletegift/',
+			data: JSON.stringify({ 
+				giftId: this.props.match.params.giftId,
+			})
 		}).done(function (data) {
-			self.setUser(data);
-			self.mergeState({ username: '', password: '' });
-			self.props.history.push(self.getParentMatchPath() + '/transactions');
+			self.props.history.push(self.getParentMatchPath() + '/gifts');
 		}).fail(function (jqXHR, textStatus, errorThrown) {
 			self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
-		});
-		*/
+		});	
+	}
+	
+	renderDeleteButton() {
+		if (this.props.match.params.giftId !== 'new') {
+			return (
+				<Button variant="primary" type="button" className="float-right" style={{ marginRight: '10px'}} onClick={() => this.deleteGift()}>
+					Delete
+				</Button>
+			);
+		}
 	}
 
 	render() {
 		return (
-			<Form onSubmit={(event) => this.saveTransaction(event)}>
+			<Form onSubmit={(event) => this.saveGift(event)}>
 			    <Container fluid>
 					<Row>
-						<Col sm={{ offset: 2, span: 8 }}>
-							<h2>Transaction {this.props.match.params.transactionId}</h2>
+						<Col sm={12}>
+							<h2>Gift {this.props.match.params.giftId}</h2>
 						</Col>
 					</Row>
-					<Form.Group as={Row} controlId="date">
+					<Form.Group as={Row} controlId="group">
 						<Col sm={2} />
-						<Form.Label column sm={1}>Date</Form.Label>
-						<Col sm={9} style={{ paddingTop: '4px' }}>
-							<DatePicker
-							  selected={this.state.date}
-							  onChange={(date) => this.mergeState({ date: date })}
-							  showTimeSelect
-							  dateFormat="Pp"
-							/>
-						</Col>
-					</Form.Group>
-					<Form.Group as={Row} controlId="checknum">
-						<Col sm={2} />
-						<Form.Label column sm={1}>Check&nbsp;#</Form.Label>
-						<Col sm={2}>
-							<Form.Control type="text" onChange={(event) => this.mergeState({ checknum: event.target.value })}/>
-						</Col>
-					</Form.Group>
-					<Form.Group as={Row} controlId="transsource">
-						<Col sm={2} />
-						<Form.Label column sm={1}>From</Form.Label>
+						<Form.Label column sm={2}>Group</Form.Label>
 						<Col sm={4}>
-							<Form.Control as="select" value={this.state.transsource} onChange={(event) => this.mergeState({ transsource: event.target.value })}>
-								{this.state.entities.map((entity) => {
+							<Form.Control as="select" value={this.state.group} onChange={(event) => this.mergeState({ group: event.target.value })}>
+								{this.state.groups.map((group) => {
 									return (
-										<option key={entity.pk} value={entity.pk}>{entity.fields.name}</option>
+										<option key={group.group_id} value={group.group_id}>{group.name}</option>
 									);										
 								})}
 							</Form.Control>
 						</Col>
 					</Form.Group>
-					<Form.Group as={Row} controlId="transdest">
+					<Form.Group as={Row} controlId="description">
 						<Col sm={2} />
-						<Form.Label column sm={1}>To</Form.Label>
-						<Col sm={4}>
-							<Form.Control as="select" value={this.state.transdest} onChange={(event) => this.mergeState({ transdest: event.target.value })}>
-								{this.state.entities.map((entity) => {
-									return (
-										<option key={entity.pk} value={entity.pk}>{entity.fields.name}</option>
-									);
-								})}
-							</Form.Control>
+						<Form.Label column sm={2}>Description</Form.Label>
+						<Col sm={6}>
+							<Form.Control type="text" value={this.state.description} onChange={(event) => this.mergeState({ description: event.target.value })}/>
 						</Col>
 					</Form.Group>
-					<Form.Group as={Row} controlId="comment">
+					<Form.Group as={Row} controlId="link">
 						<Col sm={2} />
-						<Form.Label column sm={1}>Comment</Form.Label>
-						<Col sm={5}>
-							<Form.Control type="text" onChange={(event) => this.mergeState({ comment: event.target.value })}/>
-						</Col>
-					</Form.Group>
-					<Form.Group as={Row} controlId="amount">
-						<Col sm={2} />
-						<Form.Label column sm={1}>Amount</Form.Label>
-						<Col sm={2}>
-							<Form.Control type="text" onChange={(event) => this.mergeState({ amount: event.target.value })}/>
-						</Col>
-					</Form.Group>
-					<Form.Group as={Row} controlId="status">
-						<Col sm={2} />
-						<Form.Label column sm={1}>Status</Form.Label>
-						<Col sm={4}>
-							<Form.Control as="select" value={this.state.status} onChange={(event) => this.mergeState({ status: event.target.value })}>
-								{this.state.types.map((transtype) => {
-									return (
-										<option key={transtype.pk} value={transtype.pk}>{transtype.fields.description}</option>
-									);
-								})}
-							</Form.Control>
+						<Form.Label column sm={2}>Link</Form.Label>
+						<Col sm={6}>
+							<Form.Control type="text" value={this.state.link} onChange={(event) => this.mergeState({ link: event.target.value })}/>
 						</Col>
 					</Form.Group>
 					<Row>
 						<Col sm={{offset: 2, span: 8}} md={{offset: 3, span: 6}} lg={{offset: 4, span: 4}}>
-							<Button variant="primary" type="submit" className="float-right">
+							<Button variant="primary" type="button" className="float-right" onClick={() => this.cancelEdit()}>
 								Cancel
 							</Button>
+							{this.renderDeleteButton()}
 							<Button variant="primary" type="submit" className="float-right" style={{ marginRight: '10px'}}>
 								Save
 							</Button>

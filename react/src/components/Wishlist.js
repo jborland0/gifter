@@ -14,15 +14,33 @@ class Wishlist extends GifterComponent {
 		
 		this.state = {
 			key: 1,
+			groups: [],
+			group: 0,
+			members: [],
+			member: 0,
 			gifts: [],
 			pageNumber: 1,
 			pageSize: 10,
-			pageCount: 1
+			pageCount: 0
 		};
 	}
 
 	componentDidMount() {
-		this.loadGifts(this.state.pageNumber, this.state.pageSize);
+		this.loadGroups();
+	}
+
+	loadGroups() {
+		var self = this;
+		
+		$.ajax({
+			type: 'get',
+			url: this.getConfig().baseURL + 'getactivegroups/',
+		}).done(function (data) {
+			self.mergeState({ groups: data.groups });
+			self.selectGroup(data.groups.length > 0 ? data.groups[0].group_id : 0);
+		}).fail(function (jqXHR, textStatus, errorThrown) {
+			self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
+		});		
 	}
 	
 	loadGifts(pageNumber, pageSize) {
@@ -30,8 +48,8 @@ class Wishlist extends GifterComponent {
 		
 		$.ajax({
 			type: 'get',
-			url: this.getConfig().baseURL + 'gifts/',
-			data: 'pageNumber=' + pageNumber + '&pageSize=' + pageSize
+			url: this.getConfig().baseURL + 'getgifts/',
+			data: 'groupId=' + this.state.group + '&memberId=' + this.state.member + '&pageNumber=' + pageNumber + '&pageSize=' + pageSize
 		}).done(function (data) {
 			data['key'] = self.state.key + 1;
 			self.mergeState(data);
@@ -40,12 +58,67 @@ class Wishlist extends GifterComponent {
 		});		
 	}
 	
+	selectGroup(groupId) {
+		var self = this;
+		this.mergeState({ group: groupId }, () => {
+			$.ajax({
+				type: 'get',
+				url: self.getConfig().baseURL + 'getactivemembers/',
+				data: 'groupId=' + this.state.group
+			}).done(function (data) {
+				self.mergeState({ members: data.members }, () => {
+					self.selectMember(data.members.length > 0 ? data.members[0].user_id: 0);
+				});
+			}).fail(function (jqXHR, textStatus, errorThrown) {
+				self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
+			});					
+		});
+	}
+	
+	selectMember(memberId) {
+		this.mergeState({ member: memberId }, () => {
+			this.loadGifts(this.state.pageNumber, this.state.pageSize);
+		});
+	}
+	
 	addGift() {
-		console.log('add gift')
+		this.props.history.push(this.getParentMatchPath() + '/gifts/new');
 	}
 	
 	editGift(giftId) {
 		this.props.history.push(this.getParentMatchPath() + '/gifts/' + giftId);
+	}
+	
+	buyGift(giftId) {
+		var self = this;
+		
+		$.ajax({
+			type: 'post',
+			url: this.getConfig().baseURL + 'buygift/',
+			data: JSON.stringify({ 
+				giftId: giftId,
+			})
+		}).done(function (data) {
+			self.loadGifts(self.state.pageNumber, self.state.pageSize);
+		}).fail(function (jqXHR, textStatus, errorThrown) {
+			self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
+		});		
+	}
+	
+	unGift(giftId) {
+		var self = this;
+		
+		$.ajax({
+			type: 'post',
+			url: this.getConfig().baseURL + 'ungift/',
+			data: JSON.stringify({ 
+				giftId: giftId,
+			})
+		}).done(function (data) {
+			self.loadGifts(self.state.pageNumber, self.state.pageSize);
+		}).fail(function (jqXHR, textStatus, errorThrown) {
+			self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
+		});		
 	}
 	
 	firstPage() {
@@ -84,11 +157,37 @@ class Wishlist extends GifterComponent {
 	}
 
 	render() {
+		var isMyList = this.getUser().id == this.state.member;
+		
 		return (
 			<Container fluid>
+				<Form>
+					<Row>
+						<Form.Label column sm={3}>Group</Form.Label>
+						<Col sm={3}>
+							<Form.Control as="select" value={this.state.group} onChange={(event) => this.selectGroup(event.target.value)}>
+								{this.state.groups.map((group) => {
+									return (
+										<option key={group.group_id} value={group.group_id}>{group.name}</option>
+									);										
+								})}
+							</Form.Control>
+						</Col>
+						<Form.Label column sm={3}>Member</Form.Label>
+						<Col sm={3}>
+							<Form.Control as="select" value={this.state.member} onChange={(event) => this.selectMember(event.target.value)}>
+								{this.state.members.map((member) => {
+									return (
+										<option key={member.user_id} value={member.user_id}>{member.username}</option>
+									);										
+								})}
+							</Form.Control>
+						</Col>
+					</Row>
+				</Form>
 				<Row>
 					<Col sm={12}>
-						<WishlistTable wishlist={this} key={this.state.key}
+						<WishlistTable user={this.getUser()} wishlist={this} isMyList={isMyList} key={this.state.key}
 						  gifts={this.state.gifts} propsPageNumber={this.state.pageNumber} 
 						  propsPageSize={this.state.pageSize} pageCount={this.state.pageCount}/>
 					</Col>

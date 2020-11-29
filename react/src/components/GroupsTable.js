@@ -166,23 +166,10 @@ const GroupsTable = ({ groupscomponent, groups, propsPageNumber, propsPageSize, 
 	const [pageNumber, setPageNumber] = React.useState(propsPageNumber)
 	const [pageSize, setPageSize] = React.useState(propsPageSize)
 	
-	const formatDate = (datestr) => {
-		var dateOptions = { day: '2-digit', month: '2-digit', year: '2-digit' };
-		var timeOptions = { hour12: true, hour: '2-digit', minute:'2-digit', second:'2-digit' };
-		var date = new Date(datestr);
-		return date.toLocaleDateString('en', dateOptions) + " " + 
-			date.toLocaleTimeString('en', timeOptions);
-	}
-	
-	const formatCurrency = (pennies) => {
-		var dollars = parseFloat(pennies)/100.0;
-		return dollars.toLocaleString('en-US', { currency: 'USD', minimumFractionDigits: 2 });
-	}
-	
 	const columns = React.useMemo(() => [
 	    { Header: <PlusSquare style={{ cursor: 'pointer' }} onClick={() => groupscomponent.addGroup()} />, accessor: 'group_id', 
 			Cell: props => renderEditCell(props, groupscomponent) },
-		{ Header: 'Name', accessor: 'name', },
+		{ Header: 'Name', accessor: 'name' },
 		{ Header: 'Status', accessor: 'status' }
 	], []);	
 	

@@ -30,7 +30,7 @@ class Groups extends GifterComponent {
 		
 		$.ajax({
 			type: 'get',
-			url: this.getConfig().baseURL + 'groups/',
+			url: this.getConfig().baseURL + 'getgroups/',
 			data: 'pageNumber=' + pageNumber + '&pageSize=' + pageSize
 		}).done(function (data) {
 			data['key'] = self.state.key + 1;
