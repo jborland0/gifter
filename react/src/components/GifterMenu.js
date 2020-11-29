@@ -8,9 +8,11 @@ import Button from 'react-bootstrap/Button';
 import { Col, Container, Row } from 'react-bootstrap';
 import GifterComponent from './GifterComponent';
 import Wishlist from './Wishlist';
+import Groups from "./Groups";
 import Login from './Login';
 import Register from './Register';
 import EditGift from './EditGift';
+import EditGroup from './EditGroup';
 import $ from 'jquery';
 import mosquito from '../images/mosquito_tiny.png'
 
@@ -138,6 +140,7 @@ class GifterMenu extends GifterComponent {
 						Wishlist
 					</Navbar.Brand>
 					<Nav className="justify-content-end" style={{ width: "100%" }}>
+						<Nav.Link href='#' onSelect={(eventKey, event) => this.props.history.push(this.props.match.path + '/groups')}>Groups</Nav.Link>
 						{this.renderAccountLinks()}
 					</Nav>
 				</Navbar>
@@ -145,6 +148,8 @@ class GifterMenu extends GifterComponent {
 				<Switch>
 					<Route path={this.props.match.path + '/gifts/:giftId'} render={props => <EditGift parent={this} {...props} />} />
 					<Route exact path={this.props.match.path + '/gifts'} render={props => <Wishlist parent={this} {...props} />} />
+					<Route path={this.props.match.path + '/groups/:groupId'} render={props => <EditGroup parent={this} {...props} />} />
+					<Route exact path={this.props.match.path + '/groups'} render={props => <Groups parent={this} {...props} />} />
 					<Route exact path={this.props.match.path + '/login'} render={props => <Login parent={this} {...props} />} />
 					<Route exact path={this.props.match.path + '/register'} render={props => <Register parent={this} {...props} />} />
 				</Switch>
