@@ -67,7 +67,7 @@ class Wishlist extends GifterComponent {
 				data: 'groupId=' + this.state.group
 			}).done(function (data) {
 				self.mergeState({ members: data.members }, () => {
-					self.selectMember(data.members.length > 0 ? data.members[0].user_id: 0);
+					self.selectMember(data.members.length > 0 ? self.getUser().id : 0);
 				});
 			}).fail(function (jqXHR, textStatus, errorThrown) {
 				self.showAlert('Server Error', 'Server returned a status of ' + jqXHR.status);
