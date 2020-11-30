@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
@@ -20,5 +20,6 @@ urlpatterns = [
 	path('logout/', views.logout, name='logout'),
 	path('register/', views.register, name='register'),
 	path('ungift/', views.ungift, name='ungift'),
-	path('updategift/', views.updategift, name='updategift')
+	path('updategift/', views.updategift, name='updategift'),
+	re_path(r'^(?:.*)/?$', views.index)
 ]
